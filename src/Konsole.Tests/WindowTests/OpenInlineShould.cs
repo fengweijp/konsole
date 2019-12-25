@@ -15,7 +15,8 @@ namespace Konsole.Tests.WindowTests
         {
             var c = new MockConsole(10, 4);
             c.WriteLine("line1");
-            var w = Window.OpenInline(c, 2);
+            //var w = Window.OpenInline(c, 2);
+            var w = new Window(c, 2);
             w.WriteLine("cats");
             w.WriteLine("dogs");
             w.Write("fruit");
@@ -23,12 +24,51 @@ namespace Konsole.Tests.WindowTests
             var expected = new[]
             {
                 "line1     ",
-                "dogs      ",
+                "          ",
                 "fruit     ",
                 "line2     "
             };
             c.Buffer.Should().BeEquivalentTo(expected);
         }
+
+        [Test]
+        public void clip_the_height_to_fit_within_parent()
+        {
+            var c = new MockConsole(10, 10);
+            c.CursorLeft = 5;
+            c.CursorTop = 5;
+            var w = Window.OpenInline(c, 10);
+            w.WindowHeight.Should().Be(5);
+        }
+
+        [Test]
+        public void use_the_full_screen_width_if_no_width_provided_and_move_cursor_of_host_to_below_inline_window_and_reset_x_position_to_left()
+        {
+            var c = new MockConsole(12, 10);
+            c.CursorLeft = 5;
+            c.CursorTop = 5;
+            var w = Window.OpenInline(c, 2);
+            w.WindowWidth.Should().Be(12);
+            c.CursorTop.Should().Be(7);
+            c.CursorLeft.Should().Be(0);
+        }
+
+
+        //[Test]
+        //[TestCase(0, 0, 4, 10, 4)]
+        //[TestCase(0, 0, 5, 10, 5)]
+        //[TestCase(0, 0, 15, 10, 10)] // clip the height to 10
+        //[TestCase(0, 5, 15, 10, 10)] // clip the width to 5, clip the height to 10
+        //[TestCase(5, 0, 15, 5, 10)] // clip the width to 5 and clip the height to 10
+        //public void use_balance_of_parent_height_and_width_as_defaults(int parentCurrentX, int parentCurrentY, int heightRows, int expectedWidth, int expectedHeight)
+        //{
+        //    var c = new MockConsole(10, 10);
+        //    c.CursorLeft = parentCurrentX;
+        //    c.CursorTop = parentCurrentY;
+        //    var w = Window.OpenInline(c, heightRows);
+        //    w.WindowWidth.Should().Be(expectedWidth);
+        //    w.WindowHeight.Should().Be(expectedHeight);
+        //}
 
 
     }

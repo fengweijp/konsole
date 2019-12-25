@@ -2,27 +2,30 @@
 using FluentAssertions;
 using Konsole.Tests.Helpers;
 using NUnit.Framework;
+using static System.ConsoleColor;
 
 namespace Konsole.Tests.WindowTests
 {
     public class PrintAtShould
     {
-
-
         [Test]
         public void print_relative_to_the_window_being_printed_to_not_the_parent()
         {
             var c = new MockConsole(6,4);
-            var w = new Window(1,1, 4, 2,c);
-            w.WriteLine("....");
-            w.Write("....");
+            //c.WriteLine("aaaaaa");
+            //c.WriteLine("bbbbbb");
+            //c.WriteLine("cccccc");
+            //c.Write("dddddd");
+
+            var w = new Window(c, 1, 1, 4, 2);
+
             w.PrintAt(0,0,"X");
             w.PrintAt(1,1,"Y");
             var expected = new[]
             {
                 "      ",
-                " X... ",
-                " .Y.. ",
+                " X    ",
+                "  Y   ",
                 "      "
             };
             Console.WriteLine(c.BufferWrittenString);
@@ -102,7 +105,7 @@ namespace Konsole.Tests.WindowTests
             console.PrintAt(0, 0, "X");
             // if the window was not transparent, then this window would overwrite (blank out) the 'X' just printed above, and test would fail.
             // setting the window to transparent, keeps the underlying text visible. (showing through all non printed areas).
-            var w = new Window(console, K.Transparent);
+            var w = new Window(new Settings(console){ Transparent = true });
 
             w.PrintAt(3, 1, "123");
 
@@ -123,20 +126,33 @@ namespace Konsole.Tests.WindowTests
             var console = new MockConsole(3, 3);
             console.ForegroundColor = ConsoleColor.Red;
             console.BackgroundColor = ConsoleColor.White;
+
+            var expectedBefore1 = new[]
+            {
+                " wk wk wk",
+                " wk wk wk",
+                " wk wk wk"
+            };
+
+            Precondition.Check(() => expectedBefore1.Should().BeEquivalentTo(console.BufferWithColor));
+
             console.PrintAt(0, 0, "X");
 
-            var expectedBefore = new[]
+            var expectedBefore2 = new[]
             {
                 "Xrw wk wk",
                 " wk wk wk",
                 " wk wk wk"
             };
 
-            Precondition.Check( ()=> expectedBefore.Should().BeEquivalentTo(console.BufferWithColor));
+            Precondition.Check( ()=> expectedBefore2.Should().BeEquivalentTo(console.BufferWithColor));
 
-            var w = new Window(console, K.Transparent);
-            w.ForegroundColor = ConsoleColor.DarkGreen;
-            w.BackgroundColor = ConsoleColor.DarkCyan;
+            var w = new Window(new Settings(){
+                EchoConsole = console,
+                Transparent = true,
+                Foreground = DarkGreen,
+                Background = DarkCyan
+            });
             w.PrintAt(1, 1, "YY");
 
             var expectedAfter = new[]
@@ -157,9 +173,12 @@ namespace Konsole.Tests.WindowTests
             console.WriteLine("X");
             var state = console.State;
 
-            var w = new Window(console);
-            w.ForegroundColor = ConsoleColor.DarkGreen;
-            w.BackgroundColor = ConsoleColor.DarkCyan;
+            var w = new Window(new Settings()
+            {
+                EchoConsole = console,
+                Foreground = DarkGreen,
+                Background = DarkCyan
+            });
             w.PrintAt(2, 2, "Y");
             console.State.Should().BeEquivalentTo(state);
         }

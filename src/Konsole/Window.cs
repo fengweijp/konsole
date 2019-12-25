@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Konsole.Internal;
+using static System.ConsoleColor;
 
 namespace Konsole
 {
@@ -24,6 +25,10 @@ namespace Konsole
         private readonly int _width;
         private readonly int _height;
         private readonly bool _echo;
+        internal readonly bool _isMockConsole;
+        internal readonly bool _isChildWindow;
+        internal bool _isRealRoot = false; // this is root window, and it's not a mock console, this window needs to talk to OS!
+        private IHostSizer _hostSizer = null;
 
         // Echo console is a default wrapper around the real Console, that we can swap out during testing. single underscore indicating it's not for general usage.
         private IConsole _echoConsole { get; set; }
@@ -45,10 +50,7 @@ namespace Konsole
 
         private bool _scrolling = true;
 
-        public bool Transparent
-        {
-            get { return _transparent; }
-        }
+        public bool Transparent { get; private set; } = false;
 
         private readonly ConsoleColor _startForeground;
         private readonly ConsoleColor _startBackground;
@@ -84,66 +86,78 @@ namespace Konsole
             }
         }
 
-        // to avoid constructor hell, and really hard errors, try to ensure that there is really only 1 constructor and all other constructors defer to that constructor. Do not get constructor A --> calls B --> calls C
-
-        public Window() : this(0, 0, (int?) null, (int?) null, ConsoleColor.White, ConsoleColor.Black, true, null)
+        public Window() 
+            : this(new Settings())
         {
+            
         }
 
-
-        public Window(int width, int height, params K[] options)
-            : this(null, null, width, height, ConsoleColor.White, ConsoleColor.Black, true, null, options)
+        public Window(int width, int height)
+            : this(new Settings() {  Width = width, Height = height })
         {
         }
 
         public Window(int width, int height, ConsoleColor foreground, ConsoleColor background)
-            : this(0, 0, width, height, foreground, background, true, null)
+            : this(new Settings(0, 0, width, height, foreground, background, true, null))
         {
         }
 
-        public Window(int width, int height, ConsoleColor foreground, ConsoleColor background, params K[] options)
-            : this(0, 0, width, height, foreground, background, true, null, options)
+        public Window(IConsole console, int width, int height, ConsoleColor foreground, ConsoleColor background)
+            : this(new Settings(0, 0, width, height, foreground, background, true, console))
         {
         }
 
-        public Window(IConsole console, int width, int height, ConsoleColor foreground, ConsoleColor background,
-            params K[] options)
-            : this(0, 0, width, height, foreground, background, true, console, options)
+        public Window(IConsole echoConsole, int x, int y, int width, int height, ConsoleColor foreground, ConsoleColor background)
+            : this(new Settings(x, y, width, height, foreground, background, true, echoConsole))
         {
         }
 
-        public Window(IConsole echoConsole, int x, int y, int width, int height, ConsoleColor foreground,
-            ConsoleColor background)
-            : this(x, y, width, height, foreground, background, true, echoConsole)
+        public Window(IConsole console, int height) 
+            : this(new Settings(console.CursorLeft, console.CursorTop, console.WindowWidth, height, White, Black, true, console) { Inline = true })
         {
-        }
 
-        public Window(IConsole console, int width, int height, params K[] options)
-    : this(0, 0, width, height, ConsoleColor.White, ConsoleColor.Black, true, console, options)
+        }
+        public Window(IConsole console, int width, int height) 
+            : this(new Settings(console.CursorLeft, console.CursorTop, width, height, White, Black, true, console) { Inline = true } )
         {
         }
 
         public Window(IConsole echoConsole, int x, int y, int width, int height)
-            : this(x, y, width, height, ConsoleColor.White, ConsoleColor.Black, true, echoConsole)
-        {
-        }
-
-        public Window(IConsole echoConsole, int width, int height)
-            : this(null, null, width, height, echoConsole.BackgroundColor, echoConsole.ForegroundColor, true, echoConsole)
+            : this(x, y, width, height, White, ConsoleColor.Black, true, echoConsole)
         {
         }
 
         // TODO: fix the window constructors, second parameter is sometimes height, and sometimes not!
         public Window(IConsole echoConsole, int height, ConsoleColor foreground, ConsoleColor background)
-    : this(0, 0, echoConsole.WindowWidth, height, foreground, background, true, echoConsole)
+            : this(0, 0, echoConsole.WindowWidth, height, foreground, background, true, echoConsole)
         {
         }
 
-        public static IConsole OpenInline(IConsole echoConsole, int padLeft, int width, int height, ConsoleColor foreground, ConsoleColor background, params K[] options)
+        /// <summary>
+        /// open a window Inline. Creates a window at the current cursor position of 'height' rows, and moves the OS's cursor down to underneath the window
+        /// so that your build script or whatever is using the console can carry on writing to the console oblivious that there's a window that will 
+        /// be written to.
+        /// </summary>
+        public static IConsole OpenInlineClipped(IConsole echoConsole, int padLeft, int width, int height, ConsoleColor foreground, ConsoleColor background)
         {
             lock (_staticLocker)
             {
-                var w = new Window(padLeft, echoConsole.CursorTop, width, height, foreground, background, true, echoConsole, options);
+                var w = new Window(
+                    new Settings(padLeft, echoConsole.CursorTop, width, height, foreground, background, true, echoConsole)
+                    { 
+                        Clipping = true 
+                    }  
+                );
+                echoConsole.CursorTop += height;
+                return w.Concurrent();
+            }
+        }
+
+        public static IConsole OpenInline(IConsole echoConsole, int padLeft, int width, int height, ConsoleColor foreground, ConsoleColor background)
+        {
+            lock (_staticLocker)
+            {
+                var w = new Window(padLeft, echoConsole.CursorTop, width, height, foreground, background, true, echoConsole);
                 echoConsole.CursorTop += height;
                 return w.Concurrent();
             }
@@ -155,34 +169,40 @@ namespace Konsole
             {
                 var w = new Window(0, echoConsole.CursorTop, echoConsole.WindowWidth, height, ConsoleColor.White, ConsoleColor.Black, true, echoConsole);
                 echoConsole.CursorTop += height;
+                echoConsole.CursorLeft = 0;
                 return w.Concurrent();
             }
         } 
 
-        //Window will clear the parent console area in the overlapping window.
-        // this constructor is safe to have params after IConsole because it's the only constructor that starts with IConsole, all other constructors have other strongly typed first parameter. (i.e. avoid parameter confusion)
-        public Window(IConsole echoConsole, params K[] options)
-            : this(0, 0, (int?) (null), (int?) null, ConsoleColor.White, ConsoleColor.Black, true, echoConsole, options)
+        public Window(IConsole echoConsole) : this(new Settings(echoConsole)) 
+        { 
+        }
+
+        public Window(int x, int y, int width, int height, IConsole echoConsole = null)
+            : this(new Settings(x, y, width, height, White, Black, true, echoConsole))
         {
         }
 
-        public Window(int x, int y, int width, int height, IConsole echoConsole = null, params K[] options)
-            : this(x, y, width, height, ConsoleColor.White, ConsoleColor.Black, true, echoConsole, options)
-        {
-        }
-
-        protected Window(int x, int y, int width, int height, bool echo = true, IConsole echoConsole = null,
-            params K[] options)
-            : this(x, y, width, height, ConsoleColor.White, ConsoleColor.Black, echo, echoConsole, options)
+        protected Window(int x, int y, int width, int height, bool echo = true, IConsole echoConsole = null)
+            : this(x, y, width, height, ConsoleColor.White, ConsoleColor.Black, echo, echoConsole)
         {
         }
 
         internal static object _staticLocker = new object();
 
+        [Obsolete("please use OpenFloating. This method will be removed in the next version.")]
+        public static IConsole Open(int x, int y, int width, int height, string title,
+            LineThickNess thickNess = LineThickNess.Double, ConsoleColor foregroundColor = ConsoleColor.Gray,
+            ConsoleColor backgroundColor = ConsoleColor.Black, IConsole console = null
+            )
+        {
+            return OpenFloating(x, y, width, height, title, thickNess, foregroundColor, backgroundColor, console);
+        }
+
         /// <summary>
         /// This is the the only threadsafe way to create a window at the moment.
         /// </summary>
-        public static IConsole Open(int x, int y, int width, int height, string title,
+        public static IConsole OpenFloating(int x, int y, int width, int height, string title,
         LineThickNess thickNess = LineThickNess.Double, ConsoleColor foregroundColor = ConsoleColor.Gray,
         ConsoleColor backgroundColor = ConsoleColor.Black, IConsole console = null)
         {
@@ -207,98 +227,103 @@ namespace Konsole
             }
         }
 
-        public Window(int x, int y, int width, int height, ConsoleColor foreground, ConsoleColor background,
-            IConsole echoConsole, params K[] options)
-            : this(x, y, width, height, foreground, background, true, echoConsole, options)
+        public Window(int x, int y, int width, int height, ConsoleColor foreground, ConsoleColor background, IConsole echoConsole)
+            : this(new Settings(x, y, width, height, foreground, background, true, echoConsole))
         {
 
         }
 
-        public Window(int x, int y, int width, int height, ConsoleColor foreground, ConsoleColor background,
-            params K[] options) : this(x, y, width, height, foreground, background, true, null, options)
+        public Window(int x, int y, int width, int height, ConsoleColor foreground, ConsoleColor background) 
+            : this(new Settings(x, y, width, height, foreground, background, true, null))
         {
 
         }
 
-        internal static IConsole _CreateFloatingWindow(int? x, int? y, int? width, int? height, ConsoleColor foreground,
-            ConsoleColor background,
-            bool echo = true, IConsole echoConsole = null, params K[] options)
+        internal static IConsole _CreateFloatingWindow(int x, int y, int width, int height, ConsoleColor foreground, ConsoleColor background, bool echo = true, IConsole echoConsole = null)        
         {
             lock (_staticLocker)
             {
-                var w = new Window(x, y, width, height, foreground, background, echo, echoConsole, options);
-                w.SetWindowOffset(x ?? 0, y ?? 0);
+                var w = new Window(new Settings(x, y, width, height, foreground, background, echo, echoConsole));
+                w.SetWindowOffset(x, y);
                 return w.Concurrent();
             }
         }
 
-        // This is the main constructor, all the others overload to this.
-        protected internal Window(int? x, int? y, int? width, int? height, ConsoleColor foreground, ConsoleColor background,
-            bool echo = true, IConsole echoConsole = null, params K[] options)
+        protected internal Window(int x, int y, int width, int height, ConsoleColor foreground, ConsoleColor background, bool echo = true, IConsole echoConsole = null) 
+            : this(new Settings(x, y, width, height, foreground, background, echo, echoConsole, false, false, true))
         {
+
+        }
+
+        public bool isInline { get; private set; } = false;
+
+        // This is the main constructor, all the others overload to this.
+        protected internal Window(Settings settings)
+        {
+            settings.Validate();
+
             lock (_staticLocker)
             {
-                _echo = echo;
-                _echoConsole = echoConsole;
-                if (_echo && _echoConsole == null) _echoConsole = new Writer();
+                _x = 0;
+                _y = 0;
+                Cursor = new XY(_x, _y);
+                _isMockConsole = settings.isMockConsole;
+                isInline = settings.Inline;
+                _isRealRoot = settings.IsRealRoot;
+                _echo = settings.Echo;
+                _echoConsole = _isRealRoot ? new Writer() : settings.EchoConsole;
+                _isChildWindow = !_isMockConsole;
+                _absoluteX = (settings.EchoConsole?.AbsoluteX ?? 0 ) + settings.X;
+                _absoluteY = (settings.EchoConsole?.AbsoluteY ?? 0) + settings.Y;
+                _startForeground = settings.Foreground;
+                _startBackground = settings.Background;
+                _transparent = settings.Transparent;
+                _clipping = settings.Clipping;
+                _scrolling = settings.Scrolling;
 
-                _y = y ?? _echoConsole?.CursorTop ?? _echoConsole.CursorTop + height ?? 0;
-                _x = x ?? 0;
-                _absoluteX = echoConsole?.AbsoluteX ?? 0 + _x;
-                _absoluteY = echoConsole?.AbsoluteX ?? 0 + _y;
-                _width = GetStartWidth(_echo, width, _x, echoConsole);
-                _height = GetStartHeight(height, _y, echoConsole);
-                _startForeground = foreground;
-                _startBackground = background;
+                // _hostSizer determines when we read the real width and height from Console (potentially throwing exception in unit tests with "invalid IO"
+                // and when we get the size from the echo console.
+                _hostSizer = settings.HostSizer ?? (_isRealRoot ? (IHostSizer)new HostSizer() : new Sizer(_echoConsole));
 
-                SetOptions(options);
+                (_width, _height) = ClipChildWindowToNotExceedHostBoundaries(settings);
+
                 init();
                 // if we're creating an inline window
-                if (_echoConsole != null && x == null && y == null)
+                if (isInline)
                 {
                     _echoConsole.CursorTop += _height;
                     _echoConsole.CursorLeft = 0;
                 }
+
+
             }
         }
 
-        private static int GetStartHeight(int? height, int y, IConsole echoConsole)
+        private (int width, int height) ClipChildWindowToNotExceedHostBoundaries(Settings settings)
         {
-            return height ?? (echoConsole?.WindowHeight ?? y);
-        }
+            // TEST: ConstructorShould.clip_child_window_to_not_exceed_parent_boundaries
+            // take the min of requested height or requested Height - OffsetY
 
-        private static int GetStartWidth(bool echo, int? width, int x, IConsole echoConsole)
-        {
-            // if echo is false, then this is a mock console and the width is never capped
+            // if echo console is null, then we need to get the height and width from the Operating system because
+            // theres no parent window, this is a user creating a new window() with no mock console,
+            // that's never done in tests. 
 
-            // should_clip_child_window_to_not_exceed_parent_boundaries
-
-            int echoWidth = echoConsole?.WindowWidth ?? x;
-            int maxWidth = (echoWidth - x);
-            int w = width ?? (echoConsole?.WindowWidth ?? 120);
-            if (echo && w > maxWidth) w = maxWidth;
-            return w;
-        }
-
-        private void SetOptions(K[] options)
-        {
-            if (options == null || options.Length == 0) return;
-            if (options.Contains(K.Transparent)) _transparent = true;
-            if (options.Contains(K.Clipping) && options.Contains(K.Scrolling))
-                throw new ArgumentOutOfRangeException(nameof(options),
-                    "Cannot specify Clipping as well as Scrolling; pick 1, or leave both out. Clipping is default.");
-            if (options.Contains(K.Clipping))
+            // we know a mock console will never have an offset, theres no logical use for that.
+            // and in those cases the height and width is simply the height and width of the mock console itself.
+            if(settings.isMockConsole)
             {
-                _clipping = true;
-                _scrolling = false;
+                return (settings.Width, settings.Height);
             }
 
-            if (options.Contains(K.Scrolling))
-            {
-                _scrolling = true;
-                _clipping = false;
-            }
+            int hostHeight = _hostSizer.Height;
+            int hostWidth = _hostSizer.Width;
+
+            var height = (settings.Height + settings.Y > hostHeight) ? hostHeight - settings.Y : settings.Height;
+            var width = (settings.Width + settings.X > hostWidth) ? hostWidth - settings.X : settings.Width;
+            return (width, height);
         }
+
+
 
         private void init(ConsoleColor? background = null)
         {
@@ -395,19 +420,42 @@ namespace Konsole
             }
         }
 
-
-        public void WriteLine(ConsoleColor color, string format, params object[] args)
+        //TODO: convert everything to redirect all calls to PrintAt, so that writing to parent works flawlessly!
+        private void _write(string text)
         {
-            var foreground = ForegroundColor;
-            try
+            if (_clipping && OverflowBottom)
             {
-                ForegroundColor = color;
-                WriteLine(format, args);
+                return;
             }
-            finally
+                
+            DoCommand(_echoConsole, () =>
             {
-                ForegroundColor = foreground;
-            }
+                var overflow = "";
+                while (overflow != null)
+                {
+                    if (!_lines.ContainsKey(Cursor.Y)) return;
+                    var result = _lines[Cursor.Y].WriteToRowBufferReturnWrittenAndOverflow(ForegroundColor, BackgroundColor, Cursor.X, text);
+                    overflow = result.Overflow;
+                    if (_echo && _echoConsole != null)
+                    {
+                        _echoConsole.ForegroundColor = ForegroundColor;
+                        _echoConsole.BackgroundColor = BackgroundColor;
+                        _echoConsole.PrintAt(CursorLeft + _absoluteX, CursorTop + AbsoluteY, result.Written);
+                    }
+                    if (overflow == null)
+                    {
+                        Cursor = Cursor.IncX(text.Length);
+                    }
+                    else
+                    {
+                        Cursor = new XY(0, Cursor.Y + 1);
+                        if (_clipping && OverflowBottom) break;
+                        if (OverflowBottom)
+                            ScrollDown();
+                    }
+                    text = overflow;
+                }
+            });
         }
 
         public void WriteLine(string format, params object[] args)
@@ -427,11 +475,24 @@ namespace Konsole
 
             Write(format, args);
             Cursor = new XY(0, Cursor.Y + 1);
-            if (OverflowBottom  && !_clipping)
+            if (OverflowBottom && !_clipping)
             {
                 ScrollDown();
             }
-                
+        }
+
+        public void WriteLine(ConsoleColor color, string format, params object[] args)
+        {
+            var foreground = ForegroundColor;
+            try
+            {
+                ForegroundColor = color;
+                WriteLine(format, args);
+            }
+            finally
+            {
+                ForegroundColor = foreground;
+            }
         }
 
         public void Write(ConsoleColor color, string format, params object[] args)
@@ -484,8 +545,10 @@ namespace Konsole
             _write(text);
         }
 
-        // scroll the screen up 1 line, and pop the top line off the buffer
-        //NB!Need to test if this is cross platform ?
+        /// <summary>
+        /// scroll the screen up 1 line, and pop the top line off the buffer, and fill the bottom 
+        /// line of the window with background char and colour
+        /// </summary>
         public void ScrollDown()
         {
             for (int i = 0; i < (_height-1); i++)
@@ -496,46 +559,13 @@ namespace Konsole
             Cursor = new XY(0, _height-1);
             if (_echoConsole != null)
             {
-                _echoConsole.MoveBufferArea(_x, _y + 1, _width, _height - 1, _x, _y, ' ', ForegroundColor, BackgroundColor);
+                _echoConsole.MoveBufferArea(AbsoluteX, AbsoluteY + 1, _width, _height - 1, AbsoluteX, AbsoluteY, ' ', ForegroundColor, BackgroundColor);
             }
         }
 
 
 
-        //TODO: convert everything to redirect all calls to PrintAt, so that writing to parent works flawlessly!
-        private void _write(string text)
-        {
-            if (_clipping && OverflowBottom)
-                return;
-            DoCommand(_echoConsole, () =>
-            {
-                var overflow = "";
-                while (overflow != null)
-                {
-                    if (!_lines.ContainsKey(Cursor.Y)) return;
-                    var result = _lines[Cursor.Y].WriteToRowBufferReturnWrittenAndOverflow(ForegroundColor, BackgroundColor, Cursor.X, text);
-                    overflow = result.Overflow;
-                    if (_echo && _echoConsole != null)
-                    {
-                        _echoConsole.ForegroundColor = ForegroundColor;
-                        _echoConsole.BackgroundColor = BackgroundColor;
-                        _echoConsole.PrintAt(CursorLeft + _x, CursorTop + _y, result.Written);
-                    }
-                    if (overflow == null)
-                    {
-                        Cursor = Cursor.IncX(text.Length);
-                    }
-                    else
-                    {
-                        Cursor = new XY(0, Cursor.Y + 1);
-                        if (_clipping && OverflowBottom) break;
-                        if(OverflowBottom)
-                            ScrollDown();
-                    }
-                    text = overflow;
-                }
-            });
-        }
+
 
 
         public int WindowHeight
@@ -571,10 +601,10 @@ namespace Konsole
             }
         }
 
-        internal void SetWindowOffset(int x, int y)
+        internal void SetWindowOffset(int offsetX, int offsetY)
         {
-            _absoluteX = x;
-            _absoluteY = y;
+            _absoluteX = offsetX;
+            _absoluteY = offsetY;
         }
 
         public int AbsoluteY => _absoluteY;

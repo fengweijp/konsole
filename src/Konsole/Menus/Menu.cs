@@ -118,8 +118,7 @@ namespace Konsole
                 if (menuActions == null || menuActions.Length == 0)
                     throw new ArgumentOutOfRangeException(nameof(menuActions), "Must provide at least one menu action");
                 _height = menuActions.Length + 4;
-                _window = Window.OpenInline(_menuConsole, 2, _width, _height, Theme.Foreground, Theme.Background,
-                    K.Clipping);
+                _window = Window.OpenInlineClipped(_menuConsole, 2, _width, _height, Theme.Foreground, Theme.Background);
             }
         }
 

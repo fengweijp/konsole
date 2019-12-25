@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Konsole.Internal;
+using static System.ConsoleColor;
 
 namespace Konsole
 {
@@ -13,17 +14,14 @@ namespace Konsole
     /// </summary>
     public class MockConsole : Window
     {
-        public MockConsole(int x, int y, params K[] options) 
-            : base(new NullWriter(), x, y, options) { }
+        public MockConsole(int width, int height, ConsoleColor foreground, ConsoleColor background)
+            : base(new Settings(0, 0, width, height, foreground, background, false, new NullWriter(width, height)) { isMockConsole = true }) { }
 
-        public MockConsole(int width, int height, ConsoleColor foreground, ConsoleColor background, params K[] options) 
-            : base(0,0, width, height, foreground, background, false, new NullWriter(), options) { }
-
-        public MockConsole() 
-            : base(0,0, 120, 60, ConsoleColor.White, ConsoleColor.Black, false, new NullWriter()) { }
+        public MockConsole()
+            : base(new Settings(0, 0, 120, 60, Gray, Black, false, new NullWriter(120, 60)) { isMockConsole = true }) { }
 
         public MockConsole(int width, int height) 
-            : base(0, 0, width, height, ConsoleColor.White, ConsoleColor.Black, false, new NullWriter()) { }
+            : base( new Settings(0, 0, width, height, White, Black, false, new NullWriter(width, height)) { isMockConsole = true }) { }
 
 
         public override void MoveBufferArea(int sourceLeft, int sourceTop, int sourceWidth, int sourceHeight, int targetLeft, int targetTop,

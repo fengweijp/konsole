@@ -3,6 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
+
+    <!-- hide false negative warning, this package was not restored with ... may not be fully compatible -->
+    <MSBuildWarningsAsMessages>NU1701</MSBuildWarningsAsMessages>
   </PropertyGroup>
 
   <ItemGroup>

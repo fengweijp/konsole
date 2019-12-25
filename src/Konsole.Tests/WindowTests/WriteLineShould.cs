@@ -1,6 +1,7 @@
 ﻿using System;
 using FluentAssertions;
 using NUnit.Framework;
+using static System.ConsoleColor;
 
 namespace Konsole.Tests.WindowTests
 {
@@ -17,7 +18,7 @@ namespace Konsole.Tests.WindowTests
             c.WriteLine("------");
             c.WriteLine("------");
             c.Write("------");
-            var w = new Window(1, 1, 4, 2, c, K.Transparent);
+            var w = new Window(new Settings(1, 1, 4, 2, c) { Transparent = true });
             w.WriteLine("X");
             w.Write("Y");
             var expected = new[]
@@ -49,9 +50,7 @@ namespace Konsole.Tests.WindowTests
 
             Assert.AreEqual(expectedBefore, console.BufferWithColor);
 
-            var w = new Window(1, 1, 2, 2, ConsoleColor.Black, ConsoleColor.White, console, K.Transparent);
-            w.ForegroundColor = ConsoleColor.Yellow;
-            w.BackgroundColor = ConsoleColor.Black;
+            var w = new Window(new Settings(1, 1, 2, 2, console) { Foreground = Yellow, Background = Black, Transparent = true });
             w.WriteLine("Y");
             w.Write("Z");
 
