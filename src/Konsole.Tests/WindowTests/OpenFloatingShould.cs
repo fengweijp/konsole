@@ -46,7 +46,7 @@ namespace Konsole.Tests.WindowTests
         public void open_a_window_that_can_be_scrolled()
         {
             var c = new MockConsole(15, 6);
-            var w = Window.OpenFloating(6, 1, 10, 5, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
+            var w = Window.OpenFloating(5, 1, 10, 5, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
             w.WriteLine("one");
             w.WriteLine("two");
             w.WriteLine("three");
@@ -61,7 +61,8 @@ namespace Konsole.Tests.WindowTests
                 "     ╚════════╝"
             };
 
-            c.BufferWritten.Should().BeEquivalentTo(expected);
+            var actual = c.BufferWritten;
+            actual.Should().BeEquivalentTo(expected);
         }
 
         [Test]

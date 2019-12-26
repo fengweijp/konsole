@@ -42,6 +42,7 @@
 - add input features and cursor, when using HighSpeedWriter.
 - #22 : investigate input and output redirection and using Konsole as part of a build pipeline for handling parallel build console output.
 - investigate simplifying the console window creation using similar properties dto, so that I can configure borders lines with backgrounds.
+- SplitLeftAndRight with option to merge lines or seperate (use CSS table terminology) so that you save 1 column and row each time. more practical and compact complex designs.
 - when setting a background color, as well as including Border line thickness, then the border line should share the window background colour. * I think this may only be a problem with splitleft, and splitright.
 - investigate sponsorship options, see
   - github: # Replace with up to 4 GitHub Sponsors-enabled usernames e.g., [user1, user2]

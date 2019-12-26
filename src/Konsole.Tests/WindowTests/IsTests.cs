@@ -22,15 +22,6 @@ namespace Konsole.Tests.WindowTests
             Assert.True(c._isMockConsole);
         }
 
-        // this test fails in release mode from within visual studio, but passes in release on command line.
-
-        [Test]
-        public void IsRealRoot_window_without_a_parent_is_a_real_Root()
-        {
-            var c = new Window(new Settings() { HostSizer = new MockSizer() });
-            Assert.True(c._isRealRoot);
-        }
-
         [Test]
         public void IsChildWindow_is_true_only_if_there_is_a_parent()
         {

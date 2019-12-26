@@ -12,11 +12,11 @@ namespace Konsole.Tests.MenuTests
 {
     public class PressingMenuKeyShould
     {
-        [Test]
-        public void hilight_current_menu_item()
-        {
-            Assert.Inconclusive();
-        }
+        //[Test]
+        //public void hilight_current_menu_item()
+        //{
+        //    Assert.Inconclusive();
+        //}
 
 
         [Test]
@@ -91,15 +91,15 @@ namespace Konsole.Tests.MenuTests
 
         }
 
-        [Test]
-        [TestCase(true, true, false)]
-        [TestCase(true, false, true)]
-        [TestCase(false, true, true)]
-        [TestCase(false, false, true)]
-        public void WhenDisableWhenRunning_and_already_running_should_not_activate_selected_menu_item(bool disableWhenRunning, bool alreadyRunning, bool expectActivation)
-        {
-            Assert.Inconclusive();
-        }
+        //[Test]
+        //[TestCase(true, true, false)]
+        //[TestCase(true, false, true)]
+        //[TestCase(false, true, true)]
+        //[TestCase(false, false, true)]
+        //public void WhenDisableWhenRunning_and_already_running_should_not_activate_selected_menu_item(bool disableWhenRunning, bool alreadyRunning, bool expectActivation)
+        //{
+        //    Assert.Inconclusive();
+        //}
 
         [Test]
         [TestCase(true, "12")]

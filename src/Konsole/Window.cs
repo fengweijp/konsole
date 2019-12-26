@@ -28,7 +28,7 @@ namespace Konsole
         internal readonly bool _isMockConsole;
         internal readonly bool _isChildWindow;
         internal bool _isRealRoot = false; // this is root window, and it's not a mock console, this window needs to talk to OS!
-        private IHostSizer _hostSizer = null;
+        internal IHostSize _hostSizer = null;
 
         // Echo console is a default wrapper around the real Console, that we can swap out during testing. single underscore indicating it's not for general usage.
         private IConsole _echoConsole { get; set; }
@@ -283,7 +283,7 @@ namespace Konsole
 
                 // _hostSizer determines when we read the real width and height from Console (potentially throwing exception in unit tests with "invalid IO"
                 // and when we get the size from the echo console.
-                _hostSizer = settings.HostSizer ?? (_isRealRoot ? (IHostSizer)new HostSizer() : new Sizer(_echoConsole));
+                _hostSizer = settings.HostSizer ?? (_isRealRoot ? (IHostSize)new OSSizer() : new ConsoleSizerWrapper(_echoConsole));
 
                 (_width, _height) = ClipChildWindowToNotExceedHostBoundaries(settings);
 
@@ -668,7 +668,7 @@ namespace Konsole
         {
             get
             {
-                return new ConsoleState(ForegroundColor, BackgroundColor, CursorTop, CursorLeft, CursorVisible);
+                return new ConsoleState(ForegroundColor, BackgroundColor, CursorTop, CursorLeft, _hostSizer?.CursorVisible ?? CursorVisible);                
             }
 
             set
@@ -677,6 +677,8 @@ namespace Konsole
                 CursorTop = value.Top;
                 ForegroundColor = value.ForegroundColor;
                 BackgroundColor = value.BackgroundColor;
+                // this might be very slow on every write, don't change this all the time
+                if (CursorVisible != value.CursorVisible) CursorVisible = value.CursorVisible;
             }
 
         }

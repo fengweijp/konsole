@@ -40,19 +40,13 @@ namespace Konsole
             }
             return rows;
         }
-
-        public static IConsole[] SplitColumns(this Window w, params Split[] splits)
-        {
-            IConsole console = w;
-            return SplitColumns(w, splits);
-        }
         
         public static IConsole[] SplitColumns(this IConsole c, params Split[] splits)
         {
             int width = c.WindowWidth;
             int splitWidth = splits.Sum(s => s.Size);
 
-            if (splitWidth + 1 > width)
+            if (splitWidth > width)
             {
                 throw new ArgumentOutOfRangeException($"Console window is not wide enought to support that many columns. Console width:{width}, Sum of split columns:{splitWidth}");
             }

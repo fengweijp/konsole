@@ -13,22 +13,24 @@ namespace Konsole.Tests.WindowTests
         [Test]
         public void set_cursor_position_to_below_the_window()
         {
-            var c = new MockConsole(10, 4);
-            c.WriteLine("line1");
-            //var w = Window.OpenInline(c, 2);
-            var w = new Window(c, 2);
-            w.WriteLine("cats");
-            w.WriteLine("dogs");
-            w.Write("fruit");
-            c.Write("line2");
+            var con = new MockConsole(10, 4);
+            con.WriteLine("line1");
+            var win = Window.OpenInline(con, 2);
+            //var win = new Window(con, 2);
+            win.WriteLine("moo");
+            win.WriteLine("cats");
+            win.WriteLine("dogs");
+            win.WriteLine("fruit");
+            con.Write("line2");
             var expected = new[]
             {
                 "line1     ",
-                "          ",
                 "fruit     ",
-                "line2     "
+                "line2     ",
+                "          "
+
             };
-            c.Buffer.Should().BeEquivalentTo(expected);
+            con.Buffer.Should().BeEquivalentTo(expected);
         }
 
         [Test]

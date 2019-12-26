@@ -1,6 +1,7 @@
 ﻿using System;
 using ApprovalTests.Reporters;
 using FluentAssertions;
+using Konsole.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Konsole.Tests.WindowTests
@@ -21,6 +22,41 @@ namespace Konsole.Tests.WindowTests
             var right = w.SplitRight("right");
             var nestedTop = left.SplitTop("ntop");
             var nestedBottom = left.SplitBottom("nbot");
+
+            var precondition = new[]
+            {
+                "┌─ left ─┐┌─ right ┐",
+                "│┌ ntop ┐││        │",
+                "││      │││        │",
+                "││      │││        │",
+                "││      │││        │",
+                "│└──────┘││        │",
+                "│┌ nbot ┐││        │",
+                "││      │││        │",
+                "││      │││        │",
+                "││      │││        │",
+                "│└──────┘││        │",
+                "└────────┘└────────┘"
+            };
+
+            Precondition.Check(() => w.Buffer.Should().BeEquivalentTo(precondition));
+
+            // ACTUAL
+            // -------------------
+            //┌─ left ─┐┌─ right ┐
+            //│┌ ntop ┐││        │
+            //││      │││        │
+            //││       ││        │
+            //││       ││        │
+            //│└─      ││        │
+            //│┌ nbot ┐││        │
+            //││      │││        │
+            //││       ││        │
+            //││       ││        │
+            //│└─      ││        │
+            //└────────┘└────────┘
+            //return;
+            
             void Writelines(IConsole con)
             {
                 con.WriteLine("one");
@@ -48,6 +84,21 @@ namespace Konsole.Tests.WindowTests
                 "│└──────┘││        │",
                 "└────────┘└────────┘"
             };
+
+            //  ACTUAL
+            //  ---------------------
+            //  ┌─ left ─┐┌─ right ┐
+            //  │┌ ntop ┐││one     │
+            //  ││two   │││two     │
+            //  ││three  ││three   │
+            //  ││four   ││four    │
+            //  │└─      ││        │
+            //  │┌ nbot ┐││        │
+            //  ││two   │││        │
+            //  ││three  ││        │
+            //  ││four   ││        │
+            //  │└─      ││        │
+            //  └────────┘└────────┘
 
             Console.WriteLine(w.BufferString);
             w.Buffer.Should().BeEquivalentTo(expected);
@@ -165,7 +216,8 @@ namespace Konsole.Tests.WindowTests
         public void When_scrolling_is_enabled_And_on_last_line_and_not_overflowing_width_Write_SHOULD_not_cause_a_scroll()
         {
             var c = new MockConsole(6, 2);
-            var w = new Window(new Settings(c, 6, 2) { Scrolling = true });
+            var w = new Window(new Settings(c, 6, 2));
+            w.Scrolling.Should().BeTrue();
             w.CursorLeft = 0;
             w.CursorTop = 1;
             w.Write("abcdef");
@@ -181,7 +233,8 @@ namespace Konsole.Tests.WindowTests
         public void When_scrolling_is_enabled_And_on_last_line_Write_SHOULD_not_cause_a_scroll()
         {
             var c = new MockConsole(6, 2);
-            var w = new Window(new Settings(c, 6, 2) { Scrolling = true });
+            var w = new Window(new Settings(c, 6, 2));
+            w.Scrolling.Should().BeTrue();
             w.CursorLeft = 0;
             w.CursorTop = 1;
             w.Write("abc");

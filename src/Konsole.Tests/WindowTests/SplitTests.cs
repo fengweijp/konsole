@@ -8,6 +8,131 @@ namespace Konsole.Tests.WindowTests
     {
 
         //TODO: need tests without borders
+        public class NestedTests
+        {
+            [Test]
+            public void when_with_border_and_title_singleLine_nesting_split_windows_should_split_correctly()
+            {
+                var con = new MockConsole(20, 12);
+
+                var left = con.SplitLeft("left");
+                var right = con.SplitRight("right");
+                var nestedTop = left.SplitTop("ntop");
+                var nestedBottom = left.SplitBottom("nbot");
+
+                var expected = new[]
+                {
+                "┌─ left ─┐┌─ right ┐",
+                "│┌ ntop ┐││        │",
+                "││      │││        │",
+                "││      │││        │",
+                "││      │││        │",
+                "│└──────┘││        │",
+                "│┌ nbot ┐││        │",
+                "││      │││        │",
+                "││      │││        │",
+                "││      │││        │",
+                "│└──────┘││        │",
+                "└────────┘└────────┘"
+                };
+
+                // recieved
+                // -------------------
+                //┌─ left ─┐┌─ right ┐
+                //│┌ ntop ┐││        │
+                //││      │││        │
+                //││       ││        │
+                //││       ││        │
+                //│└─      ││        │
+                //│┌ nbot ┐││        │
+                //││      │││        │
+                //││       ││        │
+                //││       ││        │
+                //│└─      ││        │
+                //└────────┘└────────┘
+
+                con.Buffer.Should().BeEquivalentTo(expected);
+            }
+
+            [Test]
+            public void when_nesting_with_border_and_title_doubleLine_split_windows_should_split_correctly()
+            {
+                var con = new MockConsole(20, 12);
+
+                var left = con.SplitLeft("left", LineThickNess.Double);
+                var right = con.SplitRight("right", LineThickNess.Double);
+                var nestedTop = left.SplitTop("ntop", LineThickNess.Double);
+                var nestedBottom = left.SplitBottom("nbot", LineThickNess.Double);
+
+                var expected = new[]
+                {
+                "╔═ left ═╗╔═ right ╗",
+                "║╔ ntop ╗║║        ║",
+                "║║      ║║║        ║",
+                "║║      ║║║        ║",
+                "║║      ║║║        ║",
+                "║╚══════╝║║        ║",
+                "║╔ nbot ╗║║        ║",
+                "║║      ║║║        ║",
+                "║║      ║║║        ║",
+                "║║      ║║║        ║",
+                "║╚══════╝║║        ║",
+                "╚════════╝╚════════╝"
+                };
+
+                // recieved
+                // -------------------
+                //╔═ left ═╗╔═ right ╗
+                //║╔ ntop ╗║║        ║
+                //║║      ║║║        ║
+                //║║       ║║        ║
+                //║║       ║║        ║
+                //║╚═      ║║        ║
+                //║╔ nbot ╗║║        ║
+                //║║      ║║║        ║
+                //║║       ║║        ║
+                //║║       ║║        ║
+                //║╚═      ║║        ║
+                //╚════════╝╚════════╝
+
+                con.Buffer.Should().BeEquivalentTo(expected);
+            }
+
+
+            [Test]
+            public void when_nesting_without_borders_split_windows_should_split_correctly()
+            {
+                var con = new MockConsole(20, 12);
+
+                var left = con.SplitLeft();
+                var right = con.SplitRight();
+                var nestedTop = left.SplitTop();
+                var nestedBottom = left.SplitBottom();
+                right.WriteLine("**********this-is-the-right-window");
+                nestedTop.WriteLine("XXXXXXXXX|top-goes-|here     |");
+                nestedBottom.WriteLine("bottom-go|es-here");
+
+                var expected = new[]
+                {
+                 "XXXXXXXXX|**********",
+                 "top-goes-|this-is-th",
+                 "here     |e-right-wi",
+                 "          ndow      ",
+                 "                    ",
+                 "                    ",
+                 "bottom-go|          ",
+                 "es-here             ",
+                 "                    ",
+                 "                    ",
+                 "                    ",
+                 "                    "
+                };
+
+                con.Buffer.Should().BeEquivalentTo(expected);
+            }
+
+        }
+
 
         public class LeftRightTests
         {

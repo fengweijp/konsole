@@ -19,10 +19,17 @@ namespace Konsole
             // echConsole = null
         }
 
-        public Settings(IConsole echoConsole, int x, int y)
+        /// <summary>
+        /// Create a new INLINE window at CursorLeft = 0 of Width and height size. Host's cursorTop will be incremented so that new writing
+        /// to host will continue underneath the newly created inline window.
+        /// </summary>
+        /// <param name="echoConsole"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        public Settings(IConsole echoConsole, int width, int height)
         {
-            X = x;
-            Y = y;
+            Width = width;
+            Height = height;
             EchoConsole = echoConsole;
         }
 
@@ -107,7 +114,7 @@ namespace Konsole
             set { _scrolling = value; _clipping = !value; }
         } 
 
-        public IHostSizer HostSizer { get; set; }
+        public IHostSize HostSizer { get; set; }
 
         /// <summary>
         /// this is set to true by the mock console so that we can tell when we need to get the host consolesize from the operating system directly.
@@ -130,6 +137,12 @@ namespace Konsole
             if (Clipping && Scrolling)
             {
                 throw new ArgumentOutOfRangeException("Cannot specify Clipping as well as Scrolling; pick 1, or leave both out. Scrolling is default.");
+            }
+
+            if(EchoConsole!=null)
+            {
+                if (X > EchoConsole.WindowWidth) throw new ArgumentOutOfRangeException(nameof(X));
+                if (Y > EchoConsole.WindowHeight) throw new ArgumentOutOfRangeException(nameof(Y));
             }
         }
     }

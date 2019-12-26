@@ -10,8 +10,13 @@ namespace Konsole.Tests.WindowTests
 {
     class ConstructorsShould
     {
-        // Need test for default constructor when passing a size provider
-
+        [Test]
+        public void WhenWindowIsAChildOfMockConsole_hostSizer_should_be_consolesizer_wrapper()
+        {
+            var con = new MockConsole(10, 4);
+            var win = new Window(con, 2);
+            win._hostSizer.Should().BeOfType<ConsoleSizerWrapper>();
+        }
 
         [Test]
         /// <summary>
@@ -39,15 +44,27 @@ namespace Konsole.Tests.WindowTests
         [Test]
         public void not_allow_start_x_y_values_outside_of_parent_window()
         {
-            Assert.Inconclusive();
+            var c = new MockConsole(6, 2);
+            Window w;
+            Action action = ()=> w = new Window(10, 10, 4, 4, c);
+            action.Should().Throw<ArgumentOutOfRangeException>();
         }
-
 
         [Test]
-        public void not_allow_negative_values()
+        public void set_cursor_left_and_top_to_origin()
         {
-            Assert.Inconclusive("new requirements");
+            var c = new MockConsole(6, 2);
+            var w = new Window(new Settings(c, 6, 2));
+            w.CursorLeft.Should().Be(0);
+            w.CursorTop.Should().Be(0);
         }
+
+
+        //[Test]
+        //public void not_allow_negative_values()
+        //{
+        //    Assert.Inconclusive("new requirements");
+        //}
 
         [Test]
         public void Not_change_parent_state()
