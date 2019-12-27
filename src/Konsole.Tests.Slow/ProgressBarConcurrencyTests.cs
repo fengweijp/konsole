@@ -16,9 +16,9 @@ namespace Konsole.Tests.Slow
         public void menu_plus_two_windows_full_of_progress_bars_each_window_on_seperate_thread_no_scrolling_of_pbars()
         {
             var console = new MockConsole();
-            var client = Window.OpenFloating(35, 0, 40, 25, "client", LineThickNess.Single, ConsoleColor.White,
+            var client = Window.OpenConcurrent(35, 0, 40, 25, "client", LineThickNess.Single, ConsoleColor.White,
                 ConsoleColor.DarkBlue, console);
-            var server = Window.OpenFloating(77, 0, 40, 25, "server", LineThickNess.Single, ConsoleColor.White,
+            var server = Window.OpenConcurrent(77, 0, 40, 25, "server", LineThickNess.Single, ConsoleColor.White,
                 ConsoleColor.DarkYellow, console);
             console.WriteLine("one");
             console.WriteLine("two");

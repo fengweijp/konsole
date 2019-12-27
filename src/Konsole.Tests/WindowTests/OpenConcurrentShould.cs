@@ -9,13 +9,13 @@ using NUnit.Framework;
 
 namespace Konsole.Tests.WindowTests
 {
-    class OpenFloatingShould
+    class OpenConcurrentShould
     {
         [Test]
         public void open_a_window_with_border_using_default_values()
         {
             var c = new MockConsole(10,5);
-            var w = Window.OpenFloating(0, 0, 10, 5,"title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
+            var w = Window.OpenConcurrent(0, 0, 10, 5,"title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
             w.WriteLine("one");
             w.WriteLine("two");
             w.Write("three");
@@ -35,7 +35,7 @@ namespace Konsole.Tests.WindowTests
         public void return_an_inside_scrollable_window_that_exactly_fits_inside_the_box_with_the_title()
         {
             var c = new MockConsole(10, 8);
-            var w = Window.OpenFloating(0, 0, 8, 6, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
+            var w = Window.OpenConcurrent(0, 0, 8, 6, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
             w.WindowHeight.Should().Be(4);
             w.WindowWidth.Should().Be(6);
             w.AbsoluteX.Should().Be(1);
@@ -46,7 +46,7 @@ namespace Konsole.Tests.WindowTests
         public void open_a_window_that_can_be_scrolled()
         {
             var c = new MockConsole(15, 6);
-            var w = Window.OpenFloating(5, 1, 10, 5, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
+            var w = Window.OpenConcurrent(5, 1, 10, 5, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
             w.WriteLine("one");
             w.WriteLine("two");
             w.WriteLine("three");
@@ -71,7 +71,7 @@ namespace Konsole.Tests.WindowTests
         public void draw_a_box_around_the_scrollable_window(LineThickNess thickness)
         {
             var c = new MockConsole(10, 8);
-            var w = Window.OpenFloating(0, 0, 10, 5, "title", thickness, ConsoleColor.White, ConsoleColor.Black, c);
+            var w = Window.OpenConcurrent(0, 0, 10, 5, "title", thickness, ConsoleColor.White, ConsoleColor.Black, c);
             var expected = new string[0];
             switch (thickness)
             {
@@ -109,7 +109,7 @@ namespace Konsole.Tests.WindowTests
         public void text_should_be_centered_or_clipped(string title)
         {
             var c = new MockConsole(10, 4);
-            var w = Window.OpenFloating(0, 0, 10, 4, title, LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
+            var w = Window.OpenConcurrent(0, 0, 10, 4, title, LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
 
             string[] expected  = new string[0];
             switch (title)
@@ -170,7 +170,7 @@ namespace Konsole.Tests.WindowTests
         public void draw_a_box_around_the_scrollable_window_with_a_centered_title_()
         {
             var c = new MockConsole(10, 8);
-            var w = Window.OpenFloating(0, 0, 10, 5, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
+            var w = Window.OpenConcurrent(0, 0, 10, 5, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black, c);
             var expected = new[]
             {
                 "╔═ title ╗",

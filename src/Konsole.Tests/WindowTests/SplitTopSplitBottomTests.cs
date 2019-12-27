@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace Konsole.Tests.WindowTests
 {
-    public class SplitTests
+    public class SplitTopSplitBottomTests
     {
 
         //TODO: need tests without borders
@@ -52,6 +53,86 @@ namespace Konsole.Tests.WindowTests
                 //└────────┘└────────┘
 
                 con.Buffer.Should().BeEquivalentTo(expected);
+            }
+
+            [Test]
+            public void SplitTop()
+            {
+                var con = new MockConsole(8, 10);
+                _ = con.SplitTop("ntop", LineThickNess.Double);
+                _ = con.SplitBottom("nbot", LineThickNess.Double);
+
+                var expected = new[]
+                {
+                "╔ ntop ╗",
+                "║      ║",
+                "║      ║",
+                "║      ║",
+                "╚══════╝",
+                "╔ nbot ╗",
+                "║      ║",
+                "║      ║",
+                "║      ║",
+                "╚══════╝",
+                };
+                con.Buffer.Should().BeEquivalentTo(expected);
+            }
+
+            [Test]
+            public void try_simpler_failing_test()
+            {
+                static void CheckWin(IConsole con, int sx, int sy, int width, int height)
+                {
+                    con.WindowHeight.Should().Be(height);
+                    con.WindowWidth.Should().Be(width);
+                    con.AbsoluteY.Should().Be(sy);
+                    con.AbsoluteX.Should().Be(sx);
+                }
+
+                var con = new MockConsole(20, 12);
+                var left = con.SplitLeft("left");
+
+                var ntop = left.SplitTop("ntop", LineThickNess.Double);
+
+                ntop.Write("111111222222333333");
+                CheckWin(ntop, 2, 2, 6, 3);
+
+                var nbot = left.SplitBottom("nbot", LineThickNess.Double);
+                CheckWin(nbot, 2, 7, 6, 3);
+                nbot.Write("111111222222333333");
+
+                var expected = new[]
+                {
+                "┌─ left ─┐",
+                "│╔ ntop ╗│",
+                "│║111111║│",
+                "│║222222║│",
+                "│║333333║│",
+                "│╚══════╝│",
+                "│╔ nbot ╗│",
+                "│║111111║│",
+                "│║222222║│",
+                "│║333333║│",
+                "│╚══════╝│",
+                "└────────┘"
+                };
+
+                // recieved
+                // ---------
+                //┌─ left ─┐
+                //│╔ ntop ╗│
+                //│║      ║│
+                //│║ 111111│
+                //│║ 222222│
+                //│╚═333333│
+                //│╔ nbot ╗│
+                //│║      ║│
+                //│║ 111111│
+                //│║ 222222│
+                //│╚═333333│
+                //└────────┘
+
+                con.BufferWrittenTrimmed.Should().BeEquivalentTo(expected);
             }
 
             [Test]

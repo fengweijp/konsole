@@ -16,7 +16,7 @@ namespace Konsole
             int height = c.WindowHeight;
             int splitHeight = splits.Sum(s => s.Size);
 
-            if (splitHeight + 1 > height)
+            if (splitHeight > height)
             {
                 throw new ArgumentOutOfRangeException($"Console window is not tall enought to support that many rows. Console height:{height}, Sum of split rows:{splitHeight}");
             }

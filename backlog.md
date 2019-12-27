@@ -35,6 +35,7 @@
 
 ## BUSY NEXT
 
+- there's no single method to create new window at 100% wide and high with a title? doh! seems so obvious. e.g. `var win = new Window("My stuff", LineThickNess.Double)`
 - add override to write, writeline, printat that takes colors, so you can set background color at the same time.
 - disable mouse click from stopping the UI from rendering! even though it does? doesn't actually halt the background tasks? either way, this is awful!
 - investigate - write test for when writing a single char in the last position of a window, does not scroll? possibly?
@@ -55,6 +56,7 @@
   - issuehunt: # Replace with a single IssueHunt username
   - otechie: # Replace with a single Otechie username
   - custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+ - SplitTop and SplitBOttom should be SplitHorizontal() and Vertical returning top and bottom, and left and right respectively. (consider if this is worth doing)
 
 ## BUSY NOW vers 4.0.1
 

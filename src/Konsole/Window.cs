@@ -196,13 +196,13 @@ namespace Konsole
             ConsoleColor backgroundColor = ConsoleColor.Black, IConsole console = null
             )
         {
-            return OpenFloating(x, y, width, height, title, thickNess, foregroundColor, backgroundColor, console);
+            return OpenConcurrent(x, y, width, height, title, thickNess, foregroundColor, backgroundColor, console);
         }
 
         /// <summary>
         /// This is the the only threadsafe way to create a window at the moment.
         /// </summary>
-        public static IConsole OpenFloating(int x, int y, int width, int height, string title,
+        public static IConsole OpenConcurrent(int x, int y, int width, int height, string title,
         LineThickNess thickNess = LineThickNess.Double, ConsoleColor foregroundColor = ConsoleColor.Gray,
         ConsoleColor backgroundColor = ConsoleColor.Black, IConsole console = null)
         {
@@ -244,7 +244,6 @@ namespace Konsole
             lock (_staticLocker)
             {
                 var w = new Window(new Settings(x, y, width, height, foreground, background, echo, echoConsole));
-                w.SetWindowOffset(x, y);
                 return w.Concurrent();
             }
         }
@@ -599,12 +598,6 @@ namespace Konsole
                 ForegroundColor = value.Foreground;
                 BackgroundColor = value.Background;
             }
-        }
-
-        internal void SetWindowOffset(int offsetX, int offsetY)
-        {
-            _absoluteX = offsetX;
-            _absoluteY = offsetY;
         }
 
         public int AbsoluteY => _absoluteY;

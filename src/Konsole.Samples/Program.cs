@@ -6,7 +6,7 @@ namespace Konsole.Sample
     {
         static void Main(string[] args)
         {
-            var w = Window.OpenFloating(0, 0, 10, 5, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black);
+            var w = Window.OpenConcurrent(0, 0, 10, 5, "title", LineThickNess.Double, ConsoleColor.White, ConsoleColor.Black);
             w.WriteLine("one");
             w.WriteLine("two");
             w.WriteLine("three");

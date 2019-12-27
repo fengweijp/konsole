@@ -12,7 +12,7 @@ namespace Konsole.Tests.Slow
         public void WindowsAndSingleBackgroundThread()
         {
             var console = new MockConsole(80,20);
-            var w1 = Window.OpenFloating(0, 0, 20, 20, "w1", LineThickNess.Single, ConsoleColor.White, ConsoleColor.DarkBlue, console);
+            var w1 = Window.OpenConcurrent(0, 0, 20, 20, "w1", LineThickNess.Single, ConsoleColor.White, ConsoleColor.DarkBlue, console);
             int max = 80000;
             Task.Run(() =>
             {
@@ -52,10 +52,10 @@ namespace Konsole.Tests.Slow
         {
             int max = 8000;
             var console = new MockConsole(80, 20);
-            var w1 = Window.OpenFloating(0, 0, 20, 20, "w1", LineThickNess.Single, ConsoleColor.White, ConsoleColor.DarkBlue, console);
-            var w2 = Window.OpenFloating(20, 0, 20, 20, "w2", LineThickNess.Single, ConsoleColor.Red, ConsoleColor.DarkYellow, console);
-            var w3 = Window.OpenFloating(40, 0, 20, 20, "w3", LineThickNess.Single, ConsoleColor.White, ConsoleColor.DarkYellow, console);
-            var w4 = Window.OpenFloating(60, 0, 20, 20, "w4", LineThickNess.Single, ConsoleColor.Black, ConsoleColor.White, console);
+            var w1 = Window.OpenConcurrent(0, 0, 20, 20, "w1", LineThickNess.Single, ConsoleColor.White, ConsoleColor.DarkBlue, console);
+            var w2 = Window.OpenConcurrent(20, 0, 20, 20, "w2", LineThickNess.Single, ConsoleColor.Red, ConsoleColor.DarkYellow, console);
+            var w3 = Window.OpenConcurrent(40, 0, 20, 20, "w3", LineThickNess.Single, ConsoleColor.White, ConsoleColor.DarkYellow, console);
+            var w4 = Window.OpenConcurrent(60, 0, 20, 20, "w4", LineThickNess.Single, ConsoleColor.Black, ConsoleColor.White, console);
             Task t1 = Task.Run(() =>
             {
                 for (int i = 0; i < max; i++) w1.Write(" {0} ", i.ToString());
