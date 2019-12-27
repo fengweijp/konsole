@@ -167,7 +167,7 @@ namespace Konsole
                     {
                         new Draw(c).Box(0, offset, w - 1, h - 1 + offset, title, thickness);
                     });
-                    return Window._CreateFloatingWindow(1, 1 + offset, w - 2, h - 2, foreground, c.BackgroundColor, true, c);
+                    return Window._CreateFloatingWindow(1 - c.AbsoluteX, 1 + offset - c.AbsoluteY, w - 2, h - 2, foreground, c.BackgroundColor, true, c);
                 }
                 return Window._CreateFloatingWindow(0, 0 + offset, w, h, foreground, c.BackgroundColor, true, c);
             }

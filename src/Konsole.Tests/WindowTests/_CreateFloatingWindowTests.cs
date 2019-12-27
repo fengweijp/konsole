@@ -52,7 +52,6 @@ namespace Konsole.Tests.WindowTests
             con.Buffer.Should().BeEquivalentTo(expected);
 
             // now test creating a nested window
-
             var float2 = Window._CreateFloatingWindow(3, 2, 3, 2, White, Black, true, float1);
             float2.CursorLeft = 0;
             float2.CursorTop = 0;

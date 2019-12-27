@@ -200,7 +200,10 @@ namespace Konsole
         }
 
         /// <summary>
-        /// This is the the only threadsafe way to create a window at the moment.
+        /// This is the the only threadsafe way to create a window at the moment. This is very seldom required though
+        /// because you typically create your windows using a single thread using simpler syntax of `new Window() followed by splits`
+        /// and then kick start any threads passing it the pre-created windows. The windows created by the normal `new Window()` methods are threadsafe
+        /// if you call `ToConcurrent()` but the process of creation is not threadsafe! This is an important distinction. 
         /// </summary>
         public static IConsole OpenConcurrent(int x, int y, int width, int height, string title,
         LineThickNess thickNess = LineThickNess.Double, ConsoleColor foregroundColor = ConsoleColor.Gray,
@@ -208,20 +211,19 @@ namespace Konsole
         {
             lock (_staticLocker)
             {
-                var echoConsole = console ?? new Writer();
-                var window = new Window(x + 1, y + 1, width - 2, height - 2, foregroundColor, backgroundColor, true,
-                    echoConsole);
-                var state = echoConsole.State;
+                var con = console ?? new Writer();
+                var window = new Window(x + 1 - con.AbsoluteX, y + 1 -con.AbsoluteY, width - 2, height - 2, foregroundColor, backgroundColor, true, con);
+                var state = con.State;
                 try
                 {
-                    echoConsole.ForegroundColor = foregroundColor;
-                    echoConsole.BackgroundColor = backgroundColor;
-                    new Draw(echoConsole).Box(x, y, x + (width - 1), y + (height - 1), title, thickNess);
+                    con.ForegroundColor = foregroundColor;
+                    con.BackgroundColor = backgroundColor;
+                    new Draw(con).Box(x, y, x + (width - 1), y + (height - 1), title, thickNess);
 
                 }
                 finally
                 {
-                    echoConsole.State = state;
+                    con.State = state;
                 }
                 return window.Concurrent();
             }
